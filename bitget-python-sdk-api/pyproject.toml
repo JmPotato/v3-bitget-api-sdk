@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "bitget-python-sdk-api"
+version = "0.1.0"
+description = ""
+authors = ["Bitget <support@bitget.com>"]
+readme = "README.md"
+packages = [
+  { include = "bitget" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+requests = "^2.32.3"
+websocket-client = "^1.8.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
