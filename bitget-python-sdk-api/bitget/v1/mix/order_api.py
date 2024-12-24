@@ -4,56 +4,64 @@ from bitget.consts import GET, POST
 
 
 class OrderApi(Client):
-    def __init__(self, api_key, api_secret_key, passphrase, use_server_time=False, first=False):
-        Client.__init__(self, api_key, api_secret_key, passphrase, use_server_time, first)
+    def __init__(self, api_key, api_secret_key, passphrase, use_server_time=False):
+        Client.__init__(self, api_key, api_secret_key, passphrase, use_server_time)
 
     def placeOrder(self, params):
-        return self._request_with_params(POST, '/api/mix/v1/order/placeOrder', params)
+        return self._request_with_params(POST, "/api/mix/v1/order/placeOrder", params)
 
     def batchPlaceOrder(self, params):
-        return self._request_with_params(POST, '/api/mix/v1/order/batch-orders', params)
+        return self._request_with_params(POST, "/api/mix/v1/order/batch-orders", params)
 
     def cancelOrder(self, params):
-        return self._request_with_params(POST, '/api/mix/v1/order/cancel-order', params)
+        return self._request_with_params(POST, "/api/mix/v1/order/cancel-order", params)
 
     def batchCancelOrders(self, params):
-        return self._request_with_params(POST, '/api/mix/v1/order/cancel-batch-orders', params)
+        return self._request_with_params(
+            POST, "/api/mix/v1/order/cancel-batch-orders", params
+        )
 
     def ordersHistory(self, params):
-        return self._request_with_params(GET, '/api/mix/v1/order/history', params)
+        return self._request_with_params(GET, "/api/mix/v1/order/history", params)
 
     def ordersPending(self, params):
-        return self._request_with_params(GET, '/api/mix/v1/order/current', params)
+        return self._request_with_params(GET, "/api/mix/v1/order/current", params)
 
     def fills(self, params):
-        return self._request_with_params(GET, '/api/mix/v1/order/fills', params)
+        return self._request_with_params(GET, "/api/mix/v1/order/fills", params)
 
     def placePlanOrder(self, params):
-        return self._request_with_params(POST, '/api/mix/v1/plan/placePlan', params)
+        return self._request_with_params(POST, "/api/mix/v1/plan/placePlan", params)
 
     def cancelPlan(self, params):
-        return self._request_with_params(POST, '/api/mix/v1/plan/cancelPlan', params)
+        return self._request_with_params(POST, "/api/mix/v1/plan/cancelPlan", params)
 
     def currentPlan(self, params):
-        return self._request_with_params(GET, '/api/mix/v1/plan/currentPlan', params)
+        return self._request_with_params(GET, "/api/mix/v1/plan/currentPlan", params)
 
     def historyPlan(self, params):
-        return self._request_with_params(GET, '/api/mix/v1/plan/historyPlan', params)
+        return self._request_with_params(GET, "/api/mix/v1/plan/historyPlan", params)
 
     def traderCloseOrder(self, params):
-        return self._request_with_params(POST, '/api/mix/v1/trace/closeTrackOrder', params)
+        return self._request_with_params(
+            POST, "/api/mix/v1/trace/closeTrackOrder", params
+        )
 
     def traderOrderCurrentTrack(self, params):
-        return self._request_with_params(GET, '/api/mix/v1/trace/currentTrack', params)
+        return self._request_with_params(GET, "/api/mix/v1/trace/currentTrack", params)
 
     def traderOrderHistoryTrack(self, params):
-        return self._request_with_params(GET, '/api/mix/v1/trace/historyTrack', params)
+        return self._request_with_params(GET, "/api/mix/v1/trace/historyTrack", params)
 
     def followerCloseByTrackingNo(self, params):
-        return self._request_with_params(POST, '/api/mix/v1/trace/followerCloseByTrackingNo', params)
+        return self._request_with_params(
+            POST, "/api/mix/v1/trace/followerCloseByTrackingNo", params
+        )
 
     def followerQueryCurrentOrders(self, params):
-        return self._request_with_params(GET, '/api/mix/v1/trace/followerOrder', params)
+        return self._request_with_params(GET, "/api/mix/v1/trace/followerOrder", params)
 
     def followerQueryHistoryOrders(self, params):
-        return self._request_with_params(GET, '/api/mix/v1/trace/followerHistoryOrders', params)
+        return self._request_with_params(
+            GET, "/api/mix/v1/trace/followerHistoryOrders", params
+        )
