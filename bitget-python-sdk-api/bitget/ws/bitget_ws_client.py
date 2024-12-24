@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import json
+import logging
 import math
 import threading
 import time
@@ -10,19 +11,21 @@ from zlib import crc32
 import websocket
 
 from bitget.consts import GET
-from .. import consts as c, utils
 
-WS_OP_LOGIN = 'login'
+from .. import consts as c
+from .. import utils
+
+WS_OP_LOGIN = "login"
 WS_OP_SUBSCRIBE = "subscribe"
 WS_OP_UNSUBSCRIBE = "unsubscribe"
 
 
 def handle(message):
-    print("default:" + message)
+    logging.debug("default:" + message)
 
 
 def handel_error(message):
-    print("default_error:" + message)
+    logging.error("default_error:" + message)
 
 
 class BitgetWsClient:
@@ -49,7 +52,7 @@ class BitgetWsClient:
         __thread.start()
 
         while not self.has_connect():
-            print("start connecting... url: ", self.__url)
+            logging.debug("start connecting... url: ", self.__url)
             time.sleep(1)
 
         if self.__need_login:
@@ -84,26 +87,34 @@ class BitgetWsClient:
 
     def __init_client(self):
         try:
-            return websocket.WebSocketApp(self.__url,
-                                          on_open=self.__on_open,
-                                          on_message=self.__on_message,
-                                          on_error=self.__on_error,
-                                          on_close=self.__on_close)
+            return websocket.WebSocketApp(
+                self.__url,
+                on_open=self.__on_open,
+                on_message=self.__on_message,
+                on_error=self.__on_error,
+                on_close=self.__on_close,
+            )
 
         except Exception as ex:
-            print(ex)
+            logging.error(ex)
 
     def __login(self):
         utils.check_none(self.__api_key, "api key")
         utils.check_none(self.__api_secret_key, "api secret key")
         utils.check_none(self.__passphrase, "passphrase")
         timestamp = int(round(time.time()))
-        sign = utils.sign(utils.pre_hash(timestamp, GET, c.REQUEST_PATH), self.__api_secret_key)
+        sign = utils.sign(
+            utils.pre_hash(timestamp, GET, c.REQUEST_PATH), self.__api_secret_key
+        )
         if c.SIGN_TYPE == c.RSA:
-            sign = utils.signByRSA(utils.pre_hash(timestamp, GET, c.REQUEST_PATH), self.__api_secret_key)
-        ws_login_req = WsLoginReq(self.__api_key, self.__passphrase, str(timestamp), sign)
+            sign = utils.signByRSA(
+                utils.pre_hash(timestamp, GET, c.REQUEST_PATH), self.__api_secret_key
+            )
+        ws_login_req = WsLoginReq(
+            self.__api_key, self.__passphrase, str(timestamp), sign
+        )
         self.send_message(WS_OP_LOGIN, [ws_login_req])
-        print("logging in......")
+        logging.debug("logging in......")
         while not self.__login_status:
             time.sleep(1)
 
@@ -111,7 +122,7 @@ class BitgetWsClient:
         try:
             self.__ws_client.run_forever(ping_timeout=10)
         except Exception as ex:
-            print(ex)
+            logging.error(ex)
 
     def __keep_connected(self, interval):
         try:
@@ -119,11 +130,11 @@ class BitgetWsClient:
             __timer_thread.start()
             self.__ws_client.send("ping")
         except Exception as ex:
-            print(ex)
+            logging.error(ex)
 
     def send_message(self, op, args):
         message = json.dumps(BaseWsReq(op, args), default=lambda o: o.__dict__)
-        print("send message:" + message)
+        logging.debug("send message:" + message)
         self.__ws_client.send(message)
 
     def subscribe(self, channels, listener=None):
@@ -153,14 +164,12 @@ class BitgetWsClient:
             pass
 
     def __on_open(self, ws):
-        print('connection is success....')
         self.__connection = True
         self.__reconnect_status = False
 
     def __on_message(self, ws, message):
 
-        if message == 'pong':
-            print("Keep connected:" + message)
+        if message == "pong":
             return
         json_obj = json.loads(message)
         if "code" in json_obj and json_obj.get("code") != 0:
@@ -169,7 +178,6 @@ class BitgetWsClient:
                 return
 
         if "event" in json_obj and json_obj.get("event") == "login":
-            print("login msg:" + message)
             self.__login_status = True
             return
         listenner = None
@@ -186,33 +194,32 @@ class BitgetWsClient:
         self.__listener(message)
 
     def __dict_books_info(self, dict):
-        return BooksInfo(dict['asks'], dict['bids'], dict['checksum'])
+        return BooksInfo(dict["asks"], dict["bids"], dict["checksum"])
 
     def __dict_to_subscribe_req(self, dict):
         if "instId" in dict:
-            instId = dict['instId']
+            instId = dict["instId"]
         else:
-            instId = dict['coin']
-        return SubscribeReq(dict['instType'], dict['channel'], instId)
+            instId = dict["coin"]
+        return SubscribeReq(dict["instType"], dict["channel"], instId)
 
     def get_listener(self, json_obj):
         try:
-            if json_obj.get('arg'):
-                json_str = str(json_obj.get('arg')).replace("\'", "\"")
-                subscribe_req = json.loads(json_str, object_hook=self.__dict_to_subscribe_req)
+            if json_obj.get("arg"):
+                json_str = str(json_obj.get("arg")).replace("'", '"')
+                subscribe_req = json.loads(
+                    json_str, object_hook=self.__dict_to_subscribe_req
+                )
                 return self.__scribe_map.get(subscribe_req)
         except Exception as e:
-            print(json_obj.get('arg'), e)
             pass
 
     def __on_error(self, ws, msg):
-        print("error:", msg)
         self.__close()
         if not self.__reconnect_status:
             self.__re_connect()
 
     def __on_close(self, ws, close_status_code, close_msg):
-        print("ws is closeing ......close_status:{},close_msg:{}".format(close_status_code, close_msg))
         self.__close()
         if not self.__reconnect_status:
             self.__re_connect()
@@ -220,9 +227,8 @@ class BitgetWsClient:
     def __re_connect(self):
         # 重连
         self.__reconnect_status = True
-        print("start reconnection ...")
         self.build()
-        for channel in self.__all_suribe :
+        for channel in self.__all_suribe:
             self.subscribe([channel])
         pass
 
@@ -236,9 +242,9 @@ class BitgetWsClient:
         try:
             if "arg" not in json_obj or "action" not in json_obj:
                 return True
-            arg = str(json_obj.get('arg')).replace("\'", "\"")
-            action = str(json_obj.get('action')).replace("\'", "\"")
-            data = str(json_obj.get('data')).replace("\'", "\"")
+            arg = str(json_obj.get("arg")).replace("'", '"')
+            action = str(json_obj.get("action")).replace("'", '"')
+            data = str(json_obj.get("data")).replace("'", '"')
 
             subscribe_req = json.loads(arg, object_hook=self.__dict_to_subscribe_req)
 
@@ -264,7 +270,6 @@ class BitgetWsClient:
                 self.__allbooks_map[subscribe_req] = all_books
         except Exception as e:
             msg = traceback.format_exc()
-            print(msg)
 
         return True
 
@@ -301,7 +306,7 @@ class BooksInfo:
         return result
 
     def check_sum(self, new_check_sum):
-        crc32str = ''
+        crc32str = ""
         for x in range(25):
             if self.bids[x] is not None:
                 crc32str = crc32str + self.bids[x][0] + ":" + self.bids[x][1] + ":"
@@ -309,10 +314,8 @@ class BooksInfo:
             if self.asks[x] is not None:
                 crc32str = crc32str + self.asks[x][0] + ":" + self.asks[x][1] + ":"
 
-        crc32str = crc32str[0:len(crc32str) - 1]
-        print(crc32str)
+        crc32str = crc32str[0 : len(crc32str) - 1]
         merge_num = crc32(bytes(crc32str, encoding="utf8"))
-        print("start checknum mergeVal:" + str(merge_num) + ",checkVal:" + str(new_check_sum)+",checkSin:"+str(self.__signed_int(merge_num)))
         return self.__signed_int(merge_num) == new_check_sum
 
     def __signed_int(self, checknum):
@@ -320,6 +323,7 @@ class BooksInfo:
         if checknum > int_max:
             return checknum - int_max * 2 - 2
         return checknum
+
 
 class SubscribeReq:
 
